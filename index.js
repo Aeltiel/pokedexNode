@@ -2,6 +2,7 @@ const express = require("express");
 const exphbs = require("express-handlebars");
 const helpers = require("handlebars-helpers")(["string"]);
 const path = require("path");
+const bodyParser = require("body-parser");
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -34,6 +35,8 @@ app.use(express.static(path.join(__dirname, "public")));
 const hbs = exphbs.create();
 app.engine("handlebars", hbs.engine);
 app.set("view engine", "handlebars");
+// permet de signifier qu'on utilisera pas de librairies externes pour envoyer les donné du formulaire
+app.use(bodyParser.urlencoded({ extended: false }));
 
 app.get(
   "/",
@@ -43,12 +46,23 @@ app.get(
   })
 );
 
+app.post("/search", (req, res) => {
+  const search = req.body.search;
+  res.redirect(`/${search}`);
+});
+
+app.get("/notFound", (req, res) => res.render("notFound"));
+
 app.get(
   "/:pokemon",
   catchErrors(async (req, res) => {
     const search = req.params.pokemon;
     const pokemon = await getPokemon(search);
-    res.render("pokemon", { pokemon });
+    if (pokemon) {
+      res.render("pokemon", { pokemon });
+    } else {
+      res.redirect("notFound");
+    }
   })
 );
 
